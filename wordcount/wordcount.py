@@ -18,7 +18,9 @@ def run(args, pipeline_args):
     with beam.Pipeline(options=PipelineOptions(pipeline_args)) as p:
 
         lines = p | ReadFromText(args.input)
-
+        ########################################################################
+        # Part1 Basic Data Mining
+        ########################################################################
         import re
         ##ignore the , in quote
         rx = re.compile(r',(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)')
@@ -122,97 +124,225 @@ def run(args, pipeline_args):
         def PairWithPrice(result):
             return (result[0], int(result[1]))
 
-        ## output index count
-        output1 = (
+
+
+        # ## output index count
+        # output1 = (
+        #     lines
+        #     | 'GetIndexofWine' >> beam.FlatMap(GetIndex)
+        #     | 'IndexPairWithOne' >> beam.Map(PairWithOne)
+        #     | 'IndexGroupAndSum' >> beam.CombinePerKey(sum)
+        #     | 'IndexFormat' >> beam.Map(FormatResult)
+        # )
+        #
+        # output1 | 'IndexCount' >> WriteToText(args.output + "index", 'csv', num_shards=1)
+        #
+        # ## output index price count
+        # output2 = (
+        #     lines
+        #     | 'GetIndexPriceofWine' >> beam.FlatMap(GetIndexPrice)
+        #     | 'IndexPairWithPrice' >> beam.Map(PairWithPrice)
+        #     | 'IndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
+        #     | 'IndexPriceFormat' >> beam.Map(FormatResult)
+        # )
+        # output2 | 'IndexPrice' >> WriteToText(args.output + "indexprice", 'csv', num_shards=1)
+        #
+        # ## output index price count
+        # output3 = (
+        #     lines
+        #     | 'GetWineryofWine' >> beam.FlatMap(GetWinery)
+        #     | 'WineryPairWithOne' >> beam.Map(PairWithOne)
+        #     | 'WineryGroupAndSum' >> beam.CombinePerKey(sum)
+        #     | 'WineryFormat' >> beam.Map(FormatResult)
+        # )
+        # output3 | 'WineryCount' >> WriteToText(args.output + "winery", 'csv', num_shards=1)
+        #
+        # ## output index price count
+        # output4 = (
+        #     lines
+        #     | 'GetWineryPriceofWine' >> beam.FlatMap(GetWineryPrice)
+        #     | 'WineryPairWithPrice' >> beam.Map(PairWithPrice)
+        #     | 'WineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
+        #     | 'WineryPriceFormat' >> beam.Map(FormatResult)
+        # )
+        # output4 | 'WineryPrice' >> WriteToText(args.output + "wineryprice", 'csv', num_shards=1)
+        #
+        # ## output index count
+        # output5 = (
+        #     lines
+        #     | 'vIndexSplit' >> beam.FlatMap(SplitLine)
+        #     | 'vIndexFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+        #     | 'vGetIndexofWine' >> beam.FlatMap(vGetIndex)
+        #     | 'vIndexPairWithOne' >> beam.Map(PairWithOne)
+        #     | 'vIndexGroupAndSum' >> beam.CombinePerKey(sum)
+        #     | 'vIndexFormat' >> beam.Map(FormatResult)
+        # )
+        #
+        # output5 | 'vIndexCount' >> WriteToText(args.output + "vindex", 'csv', num_shards=1)
+        #
+        # output6 = (
+        #     lines
+        #     | 'vIndexPriceSplit' >> beam.FlatMap(SplitLine)
+        #     | 'vIndexPriceFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+        #     | 'vGetIndexPriceofWine' >> beam.FlatMap(vGetIndexPrice)
+        #     | 'vIndexPairWithPrice' >> beam.Map(PairWithPrice)
+        #     | 'vIndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
+        #     | 'vIndexPriceFormat' >> beam.Map(FormatResult)
+        # )
+        # output6 | 'vIndexPrice' >> WriteToText(args.output + "vindexprice", 'csv', num_shards=1)
+        #
+        #
+        # ## output index price count
+        # output7 = (
+        #     lines
+        #     | 'vWinerySplit' >> beam.FlatMap(SplitLine)
+        #     | 'vWineryFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+        #     | 'vGetWineryofWine' >> beam.FlatMap(vGetWinery)
+        #     | 'vWineryPairWithOne' >> beam.Map(PairWithOne)
+        #     | 'vWineryGroupAndSum' >> beam.CombinePerKey(sum)
+        #     | 'vWineryFormat' >> beam.Map(FormatResult)
+        # )
+        # output7 | 'vWineryCount' >> WriteToText(args.output + "vwinery", 'csv', num_shards=1)
+        #
+        # ## output index price count
+        # output8 = (
+        #     lines
+        #     | 'vWineryPriceSplit' >> beam.FlatMap(SplitLine)
+        #     | 'vWineryPriceFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+        #     | 'vGetWineryPriceofWine' >> beam.FlatMap(vGetWineryPrice)
+        #     | 'vWineryPairWithPrice' >> beam.Map(PairWithPrice)
+        #     | 'vWineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
+        #     | 'vWineryPriceFormat' >> beam.Map(FormatResult)
+        # )
+        # output8 | 'vWineryPrice' >> WriteToText(args.output + "vwineryprice", 'csv', num_shards=1)
+
+        ########################################################################
+        # Part2 Most Bought Wine
+        ########################################################################
+        def GetIndexDate(line):
+            ## The structure to ouput:
+            # [[index, price]]
+            result = []
+            key = []
+            cap = []
+
+            lineSplit = rx.split(line)
+
+            index = lineSplit[0]
+            date = lineSplit[13]
+            user = lineSplit[12]
+
+            # construct a combined key
+            key.append(user)
+            key.append(date)
+
+            # construct a
+            result.append(key)
+            result.append(index)
+
+
+            cap.append(result)
+            #print cap
+            return cap
+
+        def RePair(cap):
+            #cap is [[],[]]
+
+            newPairList = []
+            SameTimeUserPurchase = cap[1]
+            # print SameTimeUserPurchase
+
+            if len(SameTimeUserPurchase) == 1:
+                newPair = []
+                newPair.append(SameTimeUserPurchase[0])
+                newPair.append(None)
+                newPairList.append(newPair)
+                # print newPair
+            else:
+                for x in SameTimeUserPurchase:
+                    for y in SameTimeUserPurchase:
+                        if (y == x):
+                            continue
+                        else:
+                            newPair = []
+                            newPair.append(x)
+                            newPair.append(y)
+                            # print newPair
+                        newPairList.append(newPair)
+            #     pass
+
+            # print newPairList
+            return newPairList
+
+        def Acheive(pair):
+            # print pair
+            cap = []
+            res =[]
+            newPair = []
+
+            newPair.append(pair[0][1])
+            newPair.append(len(pair[1]))
+
+            res.append(pair[0][0])
+            res.append(newPair)
+
+
+            cap.append(res)
+            return cap
+
+        def sortandmax(cap):
+            res = []
+            List = []
+            maxList = []
+            List.append(cap[0])
+            if len(cap[1]) > 1:
+                for x in cap[1]:
+                    if x[0] == None:
+                        cap[1].remove(x)
+            sortedList =  sorted(cap[1], key = lambda ele: ele[1], reverse = True)
+
+
+            maxvalue = sortedList[0][1]
+
+            if len(sortedList) > 1:
+                for x in sortedList:
+                    if x[1] == maxvalue:
+                        maxList.append(x)
+
+            #
+            for x in maxList:
+                List.append(x[0])
+            #
+            # print List
+            List.append(str(maxvalue))
+            # print maxList
+            # List.append(sortedList)
+            # print sortedList
+            res.append(List)
+            # cap.append(sortedList)
+            # return List
+            return res
+
+        def Formatplus(cap):
+            # print cap
+            result = "\t".join(cap)
+            return result
+
+
+
+        output = (
             lines
-            | 'GetIndexofWine' >> beam.FlatMap(GetIndex)
-            | 'IndexPairWithOne' >> beam.Map(PairWithOne)
-            | 'IndexGroupAndSum' >> beam.CombinePerKey(sum)
-            | 'IndexFormat' >> beam.Map(FormatResult)
+            | 'GetIndexDateofWine' >> beam.FlatMap(GetIndexDate)
+            | 'MergeUserDate' >> beam.GroupByKey()
+            | 'test' >> beam.ParDo(RePair)
+            | 'pairwithone' >> beam.Map(PairWithOne)
+            | 'Sum' >> beam.GroupByKey()
+            | 'achieve' >> beam.ParDo(Acheive)
+            | 'Groupagain' >> beam.GroupByKey()
+            | 'SortandMax' >> beam.ParDo(sortandmax)
+            | 'FormatMostPair' >> beam.Map(Formatplus)
         )
-
-        output1 | 'IndexCount' >> WriteToText(args.output + "index", 'csv', num_shards=1)
-
-        ## output index price count
-        output2 = (
-            lines
-            | 'GetIndexPriceofWine' >> beam.FlatMap(GetIndexPrice)
-            | 'IndexPairWithPrice' >> beam.Map(PairWithPrice)
-            | 'IndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
-            | 'IndexPriceFormat' >> beam.Map(FormatResult)
-        )
-        output2 | 'IndexPrice' >> WriteToText(args.output + "indexprice", 'csv', num_shards=1)
-
-        ## output index price count
-        output3 = (
-            lines
-            | 'GetWineryofWine' >> beam.FlatMap(GetWinery)
-            | 'WineryPairWithOne' >> beam.Map(PairWithOne)
-            | 'WineryGroupAndSum' >> beam.CombinePerKey(sum)
-            | 'WineryFormat' >> beam.Map(FormatResult)
-        )
-        output3 | 'WineryCount' >> WriteToText(args.output + "winery", 'csv', num_shards=1)
-
-        ## output index price count
-        output4 = (
-            lines
-            | 'GetWineryPriceofWine' >> beam.FlatMap(GetWineryPrice)
-            | 'WineryPairWithPrice' >> beam.Map(PairWithPrice)
-            | 'WineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
-            | 'WineryPriceFormat' >> beam.Map(FormatResult)
-        )
-        output4 | 'WineryPrice' >> WriteToText(args.output + "wineryprice", 'csv', num_shards=1)
-
-        ## output index count
-        output5 = (
-            lines
-            | 'vIndexSplit' >> beam.FlatMap(SplitLine)
-            | 'vIndexFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
-            | 'vGetIndexofWine' >> beam.FlatMap(vGetIndex)
-            | 'vIndexPairWithOne' >> beam.Map(PairWithOne)
-            | 'vIndexGroupAndSum' >> beam.CombinePerKey(sum)
-            | 'vIndexFormat' >> beam.Map(FormatResult)
-        )
-
-        output5 | 'vIndexCount' >> WriteToText(args.output + "vindex", 'csv', num_shards=1)
-
-        output6 = (
-            lines
-            | 'vIndexPriceSplit' >> beam.FlatMap(SplitLine)
-            | 'vIndexPriceFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
-            | 'vGetIndexPriceofWine' >> beam.FlatMap(vGetIndexPrice)
-            | 'vIndexPairWithPrice' >> beam.Map(PairWithPrice)
-            | 'vIndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
-            | 'vIndexPriceFormat' >> beam.Map(FormatResult)
-        )
-        output6 | 'vIndexPrice' >> WriteToText(args.output + "vindexprice", 'csv', num_shards=1)
-
-
-        ## output index price count
-        output7 = (
-            lines
-            | 'vWinerySplit' >> beam.FlatMap(SplitLine)
-            | 'vWineryFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
-            | 'vGetWineryofWine' >> beam.FlatMap(vGetWinery)
-            | 'vWineryPairWithOne' >> beam.Map(PairWithOne)
-            | 'vWineryGroupAndSum' >> beam.CombinePerKey(sum)
-            | 'vWineryFormat' >> beam.Map(FormatResult)
-        )
-        output7 | 'vWineryCount' >> WriteToText(args.output + "vwinery", 'csv', num_shards=1)
-
-        ## output index price count
-        output8 = (
-            lines
-            | 'vWineryPriceSplit' >> beam.FlatMap(SplitLine)
-            | 'vWineryPriceFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
-            | 'vGetWineryPriceofWine' >> beam.FlatMap(vGetWineryPrice)
-            | 'vWineryPairWithPrice' >> beam.Map(PairWithPrice)
-            | 'vWineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
-            | 'vWineryPriceFormat' >> beam.Map(FormatResult)
-        )
-        output8 | 'vWineryPrice' >> WriteToText(args.output + "vwineryprice", 'csv', num_shards=1)
-
-
+        output | 'MostPair' >> WriteToText(args.output + "most", 'csv', num_shards=1)
 
         # lines = p | ReadFromText(args.input)
         #
@@ -245,6 +375,9 @@ def run(args, pipeline_args):
         #     | 'Format' >> beam.Map(FormatResult)
         # )
         # output | WriteToText(args.output, 'csv', num_shards=1)
+
+
+
 
 ###################################################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE
