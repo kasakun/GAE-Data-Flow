@@ -12,33 +12,239 @@ from apache_beam.io import WriteToText
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 ###################################################################################################################################################
-
+# Edited by Zeyu Chen, variety = Chardonnay
 def run(args, pipeline_args):
 
     with beam.Pipeline(options=PipelineOptions(pipeline_args)) as p:
 
         lines = p | ReadFromText(args.input)
 
-        def SplitIntoWords(line):
-            import re
-            return re.findall(r'[A-Za-z\']+', line)
+        import re
+        ##ignore the , in quote
+        rx = re.compile(r',(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)')
 
-        def PairWithOne(word):
-            return (word, 1)
+        # def VarietyFilter(line):
+        #     temp = rx.split(line)
+        #
+        #     if temp[9].lower() == "chardonnay" :
+        def SplitLine(line):
+            res = []
+            temp = rx.split(line)
+            res.append(temp)
+            return res
 
-        def FormatResult(word_count):
-            (word, count) = word_count
-            return '%s\t%s' % (word, count)
+        def GetIndex(line):
+            print line
+            index = rx.split(line)
+            return index[0:1]
 
-        output = (
+        def vGetIndex(lineSplit):
+            return lineSplit[0:1]
+
+        def GetWinery(line):
+            winery = rx.split(line)
+            return winery[10:11]
+
+        def vGetWinery(lineSplit):
+            return lineSplit[10:11]
+
+        def GetIndexPrice(line):
+            ## The structure to ouput:
+            # [[index, price]]
+            result = []
+            cap = []
+
+            lineSplit = rx.split(line)
+
+            index = lineSplit[0]
+            price = lineSplit[5]
+
+            result.append(index)
+            result.append(price)
+
+            cap.append(result)
+            return cap
+
+        def vGetIndexPrice(lineSplit):
+            ## The structure to ouput:
+            # [[index, price]]
+            result = []
+            cap = []
+
+            index = lineSplit[0]
+            price = lineSplit[5]
+
+            result.append(index)
+            result.append(price)
+
+            cap.append(result)
+            return cap
+
+        def GetWineryPrice(line):
+            ## The structure to ouput:
+            # [[index, price]]
+            result = []
+            cap = []
+
+            lineSplit = rx.split(line)
+
+            winery = lineSplit[10]
+            price = lineSplit[5]
+
+            result.append(winery)
+            result.append(price)
+
+            cap.append(result)
+            return cap
+
+        def vGetWineryPrice(lineSplit):
+            ## The structure to ouput:
+            # [[index, price]]
+            result = []
+            cap = []
+
+            winery = lineSplit[10]
+            price = lineSplit[5]
+
+            result.append(winery)
+            result.append(price)
+
+            cap.append(result)
+            return cap
+
+        def PairWithOne(index):
+            return (index, 1)
+
+        def FormatResult(res):
+            (index, result) = res
+            return '%s\t%s' % (index, result)
+
+        def PairWithPrice(result):
+            return (result[0], int(result[1]))
+
+        ## output index count
+        output1 = (
             lines
-            | 'Split' >> beam.FlatMap(SplitIntoWords)
-            | 'PairWithOne' >> beam.Map(PairWithOne)
-            | 'GroupAndSum' >> beam.CombinePerKey(sum)
-            | 'Format' >> beam.Map(FormatResult)
+            | 'GetIndexofWine' >> beam.FlatMap(GetIndex)
+            | 'IndexPairWithOne' >> beam.Map(PairWithOne)
+            | 'IndexGroupAndSum' >> beam.CombinePerKey(sum)
+            | 'IndexFormat' >> beam.Map(FormatResult)
         )
 
-        output | WriteToText(args.output, 'csv', num_shards=1)
+        output1 | 'IndexCount' >> WriteToText(args.output + "index", 'csv', num_shards=1)
+
+        ## output index price count
+        output2 = (
+            lines
+            | 'GetIndexPriceofWine' >> beam.FlatMap(GetIndexPrice)
+            | 'IndexPairWithPrice' >> beam.Map(PairWithPrice)
+            | 'IndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
+            | 'IndexPriceFormat' >> beam.Map(FormatResult)
+        )
+        output2 | 'IndexPrice' >> WriteToText(args.output + "indexprice", 'csv', num_shards=1)
+
+        ## output index price count
+        output3 = (
+            lines
+            | 'GetWineryofWine' >> beam.FlatMap(GetWinery)
+            | 'WineryPairWithOne' >> beam.Map(PairWithOne)
+            | 'WineryGroupAndSum' >> beam.CombinePerKey(sum)
+            | 'WineryFormat' >> beam.Map(FormatResult)
+        )
+        output3 | 'WineryCount' >> WriteToText(args.output + "winery", 'csv', num_shards=1)
+
+        ## output index price count
+        output4 = (
+            lines
+            | 'GetWineryPriceofWine' >> beam.FlatMap(GetWineryPrice)
+            | 'WineryPairWithPrice' >> beam.Map(PairWithPrice)
+            | 'WineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
+            | 'WineryPriceFormat' >> beam.Map(FormatResult)
+        )
+        output4 | 'WineryPrice' >> WriteToText(args.output + "wineryprice", 'csv', num_shards=1)
+
+        ## output index count
+        output5 = (
+            lines
+            | 'vIndexSplit' >> beam.FlatMap(SplitLine)
+            | 'vIndexFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+            | 'vGetIndexofWine' >> beam.FlatMap(vGetIndex)
+            | 'vIndexPairWithOne' >> beam.Map(PairWithOne)
+            | 'vIndexGroupAndSum' >> beam.CombinePerKey(sum)
+            | 'vIndexFormat' >> beam.Map(FormatResult)
+        )
+
+        output5 | 'vIndexCount' >> WriteToText(args.output + "vindex", 'csv', num_shards=1)
+
+        output6 = (
+            lines
+            | 'vIndexPriceSplit' >> beam.FlatMap(SplitLine)
+            | 'vIndexPriceFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+            | 'vGetIndexPriceofWine' >> beam.FlatMap(vGetIndexPrice)
+            | 'vIndexPairWithPrice' >> beam.Map(PairWithPrice)
+            | 'vIndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
+            | 'vIndexPriceFormat' >> beam.Map(FormatResult)
+        )
+        output6 | 'vIndexPrice' >> WriteToText(args.output + "vindexprice", 'csv', num_shards=1)
+
+
+        ## output index price count
+        output7 = (
+            lines
+            | 'vWinerySplit' >> beam.FlatMap(SplitLine)
+            | 'vWineryFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+            | 'vGetWineryofWine' >> beam.FlatMap(vGetWinery)
+            | 'vWineryPairWithOne' >> beam.Map(PairWithOne)
+            | 'vWineryGroupAndSum' >> beam.CombinePerKey(sum)
+            | 'vWineryFormat' >> beam.Map(FormatResult)
+        )
+        output7 | 'vWineryCount' >> WriteToText(args.output + "vwinery", 'csv', num_shards=1)
+
+        ## output index price count
+        output8 = (
+            lines
+            | 'vWineryPriceSplit' >> beam.FlatMap(SplitLine)
+            | 'vWineryPriceFilter' >> beam.Filter (lambda element: element[9].lower() == "chardonnay")
+            | 'vGetWineryPriceofWine' >> beam.FlatMap(vGetWineryPrice)
+            | 'vWineryPairWithPrice' >> beam.Map(PairWithPrice)
+            | 'vWineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
+            | 'vWineryPriceFormat' >> beam.Map(FormatResult)
+        )
+        output8 | 'vWineryPrice' >> WriteToText(args.output + "vwineryprice", 'csv', num_shards=1)
+
+
+
+        # lines = p | ReadFromText(args.input)
+        #
+        # def SplitIntoWords(line):
+        #     import re
+        #     index = re.split(r',', line)
+        #     index = index[0:1, 5:6]
+        #     # print index[0:1]
+        #     #print index[0]
+        #     return index
+        #     # return re.split(r',', line)
+        #     #return re.findall(r'[A-Za-z\']+', line)
+        #
+        # def GetElement(line):
+        #     return line
+        #
+        # def PairWithOne(word):
+        #     print word
+        #     return (word, 1)
+        #
+        # def FormatResult(word_count):
+        #     (word, count) = word_count
+        #     return '%s\t%s' % (word, count)
+        #
+        # output = (
+        #     lines
+        #     | 'Split' >> beam.FlatMap(SplitIntoWords)
+        #     | 'PairWithOne' >> beam.Map(PairWithOne)
+        #     | 'GroupAndSum' >> beam.CombinePerKey(sum)
+        #     | 'Format' >> beam.Map(FormatResult)
+        # )
+        # output | WriteToText(args.output, 'csv', num_shards=1)
 
 ###################################################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE

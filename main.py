@@ -18,6 +18,8 @@ from apache_beam.options.pipeline_options import SetupOptions
 
 def run(args, pipeline_args):
     # INSERT YOUR CODE HERE
+    with beam.Pipeline(options = PipelineOptions(pipeline_args)) as p:
+        lines = p | ReadFromText(args.input)
     pass
 
 ###################################################################################################################################################
