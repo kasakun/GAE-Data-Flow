@@ -204,7 +204,7 @@ def run(args, pipeline_args):
         # )
         # output7 | 'vWineryCount' >> WriteToText(args.output + "vwinery", 'csv', num_shards=1)
         #
-        # ## output index price count
+        ## output index price count
         # output8 = (
         #     lines
         #     | 'vWineryPriceSplit' >> beam.FlatMap(SplitLine)
@@ -220,8 +220,7 @@ def run(args, pipeline_args):
         # Part2 Most Bought Wine
         ########################################################################
         def GetIndexDate(line):
-            ## The structure to ouput:
-            # [[index, price]]
+            # Input in string
             result = []
             key = []
             cap = []
@@ -240,24 +239,27 @@ def run(args, pipeline_args):
             result.append(key)
             result.append(index)
 
-
+            # put data into a capsule
             cap.append(result)
-            #print cap
+            ## The structure to ouput:
+            # print cap
+            # [[user, date], index]
             return cap
 
-        def RePair(cap):
-            #cap is [[],[]]
-
+        def RePair(incap):
+            # Input from GroupByKey
+            # ([user, date], index)
             newPairList = []
-            SameTimeUserPurchase = cap[1]
-            # print SameTimeUserPurchase
+            ## This is to fix the bug of Dataflow....
+            SameTimeUserPurchase = list(incap[1])
 
-            if len(SameTimeUserPurchase) == 1:
+            count = len(SameTimeUserPurchase)
+
+            if count == 1:
                 newPair = []
                 newPair.append(SameTimeUserPurchase[0])
                 newPair.append(None)
                 newPairList.append(newPair)
-                # print newPair
             else:
                 for x in SameTimeUserPurchase:
                     for y in SameTimeUserPurchase:
@@ -269,78 +271,106 @@ def run(args, pipeline_args):
                             newPair.append(y)
                             # print newPair
                         newPairList.append(newPair)
-            #     pass
 
+            # output one time purchase pair
+            # format [[this wine, other wine], [this wine, other wine], ....]
+            # example 1, w1, w2, w3 is purchased once purchased together
+            # The format is [[w1, w2], [w1, w3], [w2, w1], [w2, w3], [w3, w1], [w3, w2]]
+            # example 2, only w1 is purchased
+            # The format is [w1, None]
             # print newPairList
             return newPairList
-
-        def Acheive(pair):
-            # print pair
+        # def DePairWithOne(inlist):
+        #     for x in inlist:
+        #         (x, 1) = 1
+        def newPairWithOne(cap):
+            # print (cap, [1])
+            return (cap, [1])
+        def Acheive(incap):
+            # Input by GroupByKey, initial merge by user-date
+            # example 1 ([w1, w2], [1, 1, ..., 1, 1])
+            #              pair     number of pairs
+            # example 2 ([[w1, None], [1, 1, ..., 1, 1])
+            #             no pair          number
+            # print incap[0]
             cap = []
-            res =[]
             newPair = []
+            res = []
 
-            newPair.append(pair[0][1])
-            newPair.append(len(pair[1]))
+            pair = list(incap[0])
+            num = list(incap[1])
 
-            res.append(pair[0][0])
+            # [otherwine, num]
+            newPair.append(pair[1])
+            newPair.append(len(num))
+
+            res.append(pair[0])
             res.append(newPair)
 
-
             cap.append(res)
+            # output
+            # print cap
+            # [[thiswine, [otherwine1, 1]]]
             return cap
 
-        def sortandmax(cap):
-            res = []
-            List = []
-            maxList = []
-            List.append(cap[0])
-            if len(cap[1]) > 1:
-                for x in cap[1]:
+        def sortandmax(incap)
+            # Input from GroupByKey
+            # After Grouping, new format represents all other wines ans num pair with thiswine
+            # [thiswine, [[otherwine1, num], [otherwine2, num], [otherwine3, num], ...]]
+            cap = []
+            List = [] # final list
+            temp = [] # other wine index list
+            maxList = [] # pairs with same max number in list
+            ## This is to fix the bug of dataflow
+            thiswine = incap[0]
+            others = list(incap[1])
+
+            List.append(int(thiswine))
+            if len(others) > 1:
+                for x in others:
                     if x[0] == None:
-                        cap[1].remove(x)
-            sortedList =  sorted(cap[1], key = lambda ele: ele[1], reverse = True)
-
-
+                        others.remove(x)
+            sortedList =  sorted(others, key = lambda ele: ele[1], reverse = True)
             maxvalue = sortedList[0][1]
 
             if len(sortedList) > 1:
                 for x in sortedList:
                     if x[1] == maxvalue:
                         maxList.append(x)
-
-            #
-            for x in maxList:
-                List.append(x[0])
-            #
-            # print List
-            List.append(str(maxvalue))
             # print maxList
-            # List.append(sortedList)
-            # print sortedList
-            res.append(List)
-            # cap.append(sortedList)
-            # return List
-            return res
+            if len(sortedList) == 1 and sortedList[0][0] == None:
+                sortedList[0][1] = 0
 
-        def Formatplus(cap):
-            # print cap
-            result = "\t".join(cap)
+            for x in maxList:
+                temp.append(int(x[0]))
+
+            # ascending indexes after wine index 1
+            temp = sorted(temp, key = lambda ele: ele)
+
+            # merge thiswine+otherwines
+            List = List + temp
+            # merge thiswine+otherwines+maxvalue
+            List.append(maxvalue)
+
+            cap.append(List)
+            return cap
+
+        def mostFormat(cap):
+            result = "\t".join(str(x) for x in cap)
             return result
-
-
 
         output = (
             lines
             | 'GetIndexDateofWine' >> beam.FlatMap(GetIndexDate)
             | 'MergeUserDate' >> beam.GroupByKey()
-            | 'test' >> beam.ParDo(RePair)
-            | 'pairwithone' >> beam.Map(PairWithOne)
+            | 'test' >> beam.FlatMap(RePair)
+            # | 'Mapping' >> beam.Map(MMap)
+            | 'pairwithone' >> beam.Map(newPairWithOne)
             | 'Sum' >> beam.GroupByKey()
             | 'achieve' >> beam.ParDo(Acheive)
             | 'Groupagain' >> beam.GroupByKey()
             | 'SortandMax' >> beam.ParDo(sortandmax)
-            | 'FormatMostPair' >> beam.Map(Formatplus)
+            | 'FormatMostPair' >> beam.Map(mostFormat)
         )
         output | 'MostPair' >> WriteToText(args.output + "most", 'csv', num_shards=1)
 
