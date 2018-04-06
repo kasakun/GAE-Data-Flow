@@ -390,7 +390,7 @@ def run(args, pipeline_args):
                 | 'SortandMax' >> beam.ParDo(sortandmax)
                 | 'FormatMostPair' >> beam.Map(mostFormat)
             )
-            output | 'MostPair' >> WriteToText(args.output + "most", file_name_suffix='.csv', num_shards=1, shard_name_template='')
+            output | 'MostPair' >> WriteToText(args.output + "purchased_together", file_name_suffix='.csv', num_shards=1, shard_name_template='')
 
 ###################################################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE
