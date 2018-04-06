@@ -179,7 +179,7 @@ def run(args, pipeline_args):
         #
             ## output index count
         if args.bottles_sold and args.variety != None:
-            print "Running in bottles sold mode for" + args.variety + "."
+            print "Running in bottles sold mode for " + args.variety + "."
             output5 = (
                 lines
                 | 'vIndexSplit' >> beam.FlatMap(SplitLine)
