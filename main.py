@@ -40,92 +40,111 @@ def run(args, pipeline_args):
 
         def GetIndex(line):
             # print line
-            index = rx.split(line)
-            return index[0:1]
+            res = []
+            lineSplit = rx.split(line)
+            index = lineSplit[0]
+            quant = lineSplit[11]
+            res.append(index)
+            res.append(quant)
+            return res
 
         def vGetIndex(lineSplit):
-            return lineSplit[0:1]
+            res = []
+
+            index = lineSplit[0]
+            quant = lineSplit[11]
+            res.append(index)
+            res.append(quant)
+            return res
 
         def GetWinery(line):
-            winery = rx.split(line)
-            return winery[10:11]
+            res = []
+            lineSplit = rx.split(line)
+            winery = lineSplit[10]
+            quant = lineSplit[11]
+            res.append(winery)
+            res.append(quant)
+            return res
 
         def vGetWinery(lineSplit):
-            return lineSplit[10:11]
+            res = []
+            winery = lineSplit[10]
+            quant = lineSplit[11]
+            res.append(winery)
+            res.append(quant)
+            return res
 
         def GetIndexPrice(line):
             ## The structure to ouput:
             # [[index, price]]
-            result = []
-            cap = []
+            res = []
 
             lineSplit = rx.split(line)
 
             index = lineSplit[0]
             price = lineSplit[5]
+            quant = lineSplit[11]
 
-            result.append(index)
-            result.append(price)
+            res.append(index)
+            res.append(price)
+            res.append(quant)
 
-            cap.append(result)
-            return cap
+            return res
 
         def vGetIndexPrice(lineSplit):
             ## The structure to ouput:
             # [[index, price]]
-            result = []
-            cap = []
+            res = []
 
             index = lineSplit[0]
             price = lineSplit[5]
+            quant = lineSplit[11]
 
-            result.append(index)
-            result.append(price)
+            res.append(index)
+            res.append(price)
+            res.append(quant)
 
-            cap.append(result)
-            return cap
+            return res
 
         def GetWineryPrice(line):
-            ## The structure to ouput:
-            # [[index, price]]
-            result = []
-            cap = []
+            res = []
 
             lineSplit = rx.split(line)
 
             winery = lineSplit[10]
             price = lineSplit[5]
+            quant = lineSplit[11]
 
-            result.append(winery)
-            result.append(price)
+            res.append(winery)
+            res.append(price)
+            res.append(quant)
 
-            cap.append(result)
-            return cap
+            return res
 
         def vGetWineryPrice(lineSplit):
-            ## The structure to ouput:
-            # [[index, price]]
-            result = []
-            cap = []
+            res = []
 
             winery = lineSplit[10]
             price = lineSplit[5]
+            quant = lineSplit[11]
 
-            result.append(winery)
-            result.append(price)
+            res.append(winery)
+            res.append(price)
+            res.append(quant)
 
-            cap.append(result)
-            return cap
+            return res
 
-        def PairWithOne(index):
-            return (index, 1)
+        def PairWithQuant(incap):
+            return (incap[0], int(incap[1]))
+
+        def PairWithPrice(incap):
+            return (incap[0], int(incap[1])*int(incap[2]))
 
         def FormatResult(res):
             (index, result) = res
             return '%s\t%s' % (index, result)
 
-        def PairWithPrice(result):
-            return (result[0], int(result[1]))
+
 
 
         if args.bottles_sold and args.variety == None:
@@ -133,8 +152,8 @@ def run(args, pipeline_args):
             ## output index count
             output1 = (
                 lines
-                | 'GetIndexofWine' >> beam.FlatMap(GetIndex)
-                | 'IndexPairWithOne' >> beam.Map(PairWithOne)
+                | 'GetIndexofWine' >> beam.Map(GetIndex)
+                | 'IndexPairWithQuant' >> beam.Map(PairWithQuant)
                 | 'IndexGroupAndSum' >> beam.CombinePerKey(sum)
                 | 'IndexFormat' >> beam.Map(FormatResult)
             )
@@ -146,7 +165,7 @@ def run(args, pipeline_args):
             ## output index price count
             output2 = (
                 lines
-                | 'GetIndexPriceofWine' >> beam.FlatMap(GetIndexPrice)
+                | 'GetIndexPriceofWine' >> beam.Map(GetIndexPrice)
                 | 'IndexPairWithPrice' >> beam.Map(PairWithPrice)
                 | 'IndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
                 | 'IndexPriceFormat' >> beam.Map(FormatResult)
@@ -158,8 +177,8 @@ def run(args, pipeline_args):
             ## output index price count
             output3 = (
                 lines
-                | 'GetWineryofWine' >> beam.FlatMap(GetWinery)
-                | 'WineryPairWithOne' >> beam.Map(PairWithOne)
+                | 'GetWineryofWine' >> beam.Map(GetWinery)
+                | 'WineryPairWithQuant' >> beam.Map(PairWithQuant)
                 | 'WineryGroupAndSum' >> beam.CombinePerKey(sum)
                 | 'WineryFormat' >> beam.Map(FormatResult)
             )
@@ -170,7 +189,7 @@ def run(args, pipeline_args):
             ## output index price count
             output4 = (
                 lines
-                | 'GetWineryPriceofWine' >> beam.FlatMap(GetWineryPrice)
+                | 'GetWineryPriceofWine' >> beam.Map(GetWineryPrice)
                 | 'WineryPairWithPrice' >> beam.Map(PairWithPrice)
                 | 'WineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
                 | 'WineryPriceFormat' >> beam.Map(FormatResult)
@@ -184,8 +203,8 @@ def run(args, pipeline_args):
                 lines
                 | 'vIndexSplit' >> beam.FlatMap(SplitLine)
                 | 'vIndexFilter' >> beam.Filter (lambda element: element[9].lower() == args.variety.lower())
-                | 'vGetIndexofWine' >> beam.FlatMap(vGetIndex)
-                | 'vIndexPairWithOne' >> beam.Map(PairWithOne)
+                | 'vGetIndexofWine' >> beam.Map(vGetIndex)
+                | 'vIndexPairWithQuant' >> beam.Map(PairWithQuant)
                 | 'vIndexGroupAndSum' >> beam.CombinePerKey(sum)
                 | 'vIndexFormat' >> beam.Map(FormatResult)
             )
@@ -198,7 +217,7 @@ def run(args, pipeline_args):
                 lines
                 | 'vIndexPriceSplit' >> beam.FlatMap(SplitLine)
                 | 'vIndexPriceFilter' >> beam.Filter (lambda element: element[9].lower() == args.variety.lower())
-                | 'vGetIndexPriceofWine' >> beam.FlatMap(vGetIndexPrice)
+                | 'vGetIndexPriceofWine' >> beam.Map(vGetIndexPrice)
                 | 'vIndexPairWithPrice' >> beam.Map(PairWithPrice)
                 | 'vIndexGroupAndSumPrice' >> beam.CombinePerKey(sum)
                 | 'vIndexPriceFormat' >> beam.Map(FormatResult)
@@ -212,8 +231,8 @@ def run(args, pipeline_args):
                 lines
                 | 'vWinerySplit' >> beam.FlatMap(SplitLine)
                 | 'vWineryFilter' >> beam.Filter (lambda element: element[9].lower() == args.variety.lower())
-                | 'vGetWineryofWine' >> beam.FlatMap(vGetWinery)
-                | 'vWineryPairWithOne' >> beam.Map(PairWithOne)
+                | 'vGetWineryofWine' >> beam.Map(vGetWinery)
+                | 'vWineryPairWithQuant' >> beam.Map(PairWithQuant)
                 | 'vWineryGroupAndSum' >> beam.CombinePerKey(sum)
                 | 'vWineryFormat' >> beam.Map(FormatResult)
             )
@@ -226,7 +245,7 @@ def run(args, pipeline_args):
                 lines
                 | 'vWineryPriceSplit' >> beam.FlatMap(SplitLine)
                 | 'vWineryPriceFilter' >> beam.Filter (lambda element: element[9].lower() == args.variety.lower())
-                | 'vGetWineryPriceofWine' >> beam.FlatMap(vGetWineryPrice)
+                | 'vGetWineryPriceofWine' >> beam.Map(vGetWineryPrice)
                 | 'vWineryPairWithPrice' >> beam.Map(PairWithPrice)
                 | 'vWineryGroupAndSumPrice' >> beam.CombinePerKey(sum)
                 | 'vWineryPriceFormat' >> beam.Map(FormatResult)
@@ -296,9 +315,7 @@ def run(args, pipeline_args):
             # The format is [w1, None]
             # print newPairList
             return newPairList
-        # def DePairWithOne(inlist):
-        #     for x in inlist:
-        #         (x, 1) = 1
+
         def newPairWithOne(cap):
             # print (cap, [1])
             return (cap, [1])
