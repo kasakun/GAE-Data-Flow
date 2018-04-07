@@ -16,7 +16,8 @@ MODE, bottles_sold, dollars sold, etc.
 VARIETY, to choose the variety of the wines, invalid MODE(purchased_together)
 
 
-To run it by script, simply run in command line:
+To run it by script, simply run in command line.
+
 Local:
 ```
 chmod +x localrun.sh
@@ -30,3 +31,11 @@ chmod +x rermoterun.sh
 ```
 
 The script is written to run all 9 parts.
+
+If you want to change the variety in the script, simply change the variable in the script.
+
+```
+VARIETY="yourpreference"
+```
+
+
