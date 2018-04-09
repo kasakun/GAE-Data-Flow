@@ -1,11 +1,11 @@
 #!/bin/bash
 
 INPUT_PATH="test.csv"
-OUTPUT_PATH="output/test/"
+OUTPUT_PATH="output/chardonnay/"
 RUNNER="Direct"
 PROJECT_ID="chen-zeyu-wine-dataflow"
 TEMP="tmp/"
-VARIETY="Red Blend" #test Red Blend Chardonnay
+VARIETY="Chardonnay" #test Red Blend Chardonnay
 
 MODE1="--bottles_sold"
 MODE2="--dollars_sold"

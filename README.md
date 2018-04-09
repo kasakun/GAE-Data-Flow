@@ -1,6 +1,7 @@
 # GAE-Data-Flow
 
 ## How to run
+Firstly, go to the virtual environment.
 
 To run it direclty in terminal
 ```
@@ -32,10 +33,11 @@ chmod +x rermoterun.sh
 
 The script is written to run all 9 parts.
 
-If you want to change the variety in the script, simply change the variable in the script.
+If you want to change directory path or variety in the script, simply change the variable in the script.
 
 ```
-VARIETY="yourpreference"
+OUTPUT="your prefernce"
+VARIETY="your preference"
 ```
 
 

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-INPUT_PATH="gs://chen-zeyu-wine-dataflow/input/test.csv"
-OUTPUT_PATH="gs://chen-zeyu-wine-dataflow/test/"
+INPUT_PATH="gs://chen-zeyu-wine-dataflow/input/filtered_output_dataset.csv"
+OUTPUT_PATH="gs://chen-zeyu-wine-dataflow/Chardonnay/"
 RUNNER="DataflowRunner"
 PROJECT_ID="chen-zeyu-wine-dataflow"
 TEMP="gs://chen-zeyu-wine-dataflow/tmp/"
 
-VARIETY="Red Blend" #test Red Blend Chardonnay
+VARIETY="Chardonnay" #test Red Blend Chardonnay
 
 MODE1="--bottles_sold"
 MODE2="--dollars_sold"

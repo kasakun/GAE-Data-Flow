@@ -373,17 +373,19 @@ def run(args, pipeline_args):
             # print maxList
             if len(sortedList) == 1 and sortedList[0][0] == None:
                 sortedList[0][1] = 0
+                temp.append(None)
+                List = List + temp
+                List.append(0)
+            else:
+                for x in maxList:
+                    temp.append(int(x[0]))
 
-            for x in maxList:
-                temp.append(int(x[0]))
-
-            # ascending indexes after wine index 1
-            temp = sorted(temp, key = lambda ele: ele)
-
-            # merge thiswine+otherwines
-            List = List + temp
-            # merge thiswine+otherwines+maxvalue
-            List.append(maxvalue)
+                # ascending indexes after wine index 1
+                temp = sorted(temp, key = lambda ele: ele)
+                # merge thiswine+otherwines
+                List = List + temp
+                # merge thiswine+otherwines+maxvalue
+                List.append(maxvalue)
 
             cap.append(List)
             return cap
