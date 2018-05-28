@@ -1,4 +1,6 @@
 # GAE-Data-Flow
+## Fore Word
+This is a Map Reduce script written to filter data in large wine data cluster. The framework is basically designed for google cloud engine.
 
 ## How to run
 Firstly, go to the virtual environment.
